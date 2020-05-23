@@ -3,7 +3,7 @@
  * @version: 1.0
  */
 
-import tmiclient from "../main.ts";
+import tmiclient from "../main.js";
 import { config } from "https://deno.land/x/dotenv/mod.ts";
 
 config({
