@@ -1,12 +1,19 @@
 import _ from "./utils.ts";
 
-var currentLevel = "info";
-var levels = { trace: 0, debug: 1, info: 2, warn: 3, error: 4, fatal: 5 };
+export enum levels {
+  trace,
+  debug,
+  info,
+  warn,
+  error,
+  fatal
+}
+let currentLevel = levels.info;
 
 // Logger implementation..
-function log(level) {
+function log(level: levels) {
   // Return a console message depending on the logging level..
-  return function (message) {
+  return function (message: string) {
     if (levels[level] >= levels[currentLevel]) {
       console.log(`[${_.formatDate(new Date())}] ${level}: ${message}`);
     }
@@ -15,13 +22,13 @@ function log(level) {
 
 export default {
   // Change the current logging level..
-  setLevel: function (level) {
+  setLevel: function (level: levels) {
     currentLevel = level;
   },
-  trace: log("trace"),
-  debug: log("debug"),
-  info: log("info"),
-  warn: log("warn"),
-  error: log("error"),
-  fatal: log("fatal")
+  trace: log(levels.trace),
+  debug: log(levels.debug),
+  info: log(levels.info),
+  warn: log(levels.warn),
+  error: log(levels.error),
+  fatal: log(levels.fatal)
 };

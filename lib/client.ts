@@ -1,7 +1,7 @@
 import api from "./api.ts";
 import { EventEmitter } from "./events.ts";
 import { Commands } from "./commands.ts";
-import logger from "./logger.ts";
+import logger, { levels } from "./logger.ts";
 import parse from "./parser.ts";
 import timer from "./timer.ts";
 import _ from "./utils.ts";
@@ -95,9 +95,9 @@ export default class TMIClient extends Commands, EventEmitter {
     this.secure = _.get(this.opts.connection.secure, false);
 
     // Create the logger..
-    let level = "error";
+    let level = levels.error;
     if (this.opts.options.debug) {
-      level = "info";
+      level = levels.info;
     }
 
     try {

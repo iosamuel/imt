@@ -23,16 +23,30 @@
 	OF SUCH DAMAGE.
 */
 import _ from "./utils.ts";
-var nonspaceRegex = /\S+/g;
+const nonspaceRegex = /\S+/g;
 
-function parseComplexTag(tags, tagKey, splA = ",", splB = "/", splC) {
-  var raw = tags[tagKey];
+interface Tags {
+  [k: string]: null | boolean | string | object;
+}
+
+interface Emotes {
+  [k: string]: number[][];
+}
+
+function parseComplexTag(
+  tags: Tags,
+  tagKey: string,
+  splA = ",",
+  splB = "/",
+  splC: string | undefined = undefined
+) {
+  const raw = tags[tagKey];
 
   if (raw === undefined) {
     return tags;
   }
 
-  var tagIsString = _.isString(raw);
+  const tagIsString = _.isString(raw);
   tags[tagKey + "-raw"] = tagIsString ? raw : null;
 
   if (raw === true) {
@@ -43,14 +57,16 @@ function parseComplexTag(tags, tagKey, splA = ",", splB = "/", splC) {
   tags[tagKey] = {};
 
   if (tagIsString) {
-    var spl = raw.split(splA);
+    // @ts-ignore
+    const spl = raw.split(splA);
 
-    for (var i = 0; i < spl.length; i++) {
-      var parts = spl[i].split(splB);
-      var val = parts[1];
+    for (let i = 0; i < spl.length; i++) {
+      const parts = spl[i].split(splB);
+      let val = parts[1];
       if (splC !== undefined && val) {
         val = val.split(splC);
       }
+      // @ts-ignore
       tags[tagKey][parts[0]] = val || null;
     }
   }
@@ -59,25 +75,25 @@ function parseComplexTag(tags, tagKey, splA = ",", splB = "/", splC) {
 
 export default {
   // Parse Twitch badges..
-  badges: function badges(tags) {
+  badges(tags: Tags) {
     return parseComplexTag(tags, "badges");
   },
 
   // Parse Twitch badge-info..
-  badgeInfo: function badgeInfo(tags) {
+  badgeInfo(tags: Tags) {
     return parseComplexTag(tags, "badge-info");
   },
 
   // Parse Twitch emotes..
-  emotes: function emotes(tags) {
+  emotes(tags: Tags) {
     return parseComplexTag(tags, "emotes", "/", ":", ",");
   },
 
   // Parse regex emotes..
-  emoteRegex: function emoteRegex(msg, code, id, obj) {
+  emoteRegex(msg: string, code: string, id: string | number, obj: Emotes) {
     nonspaceRegex.lastIndex = 0;
-    var regex = new RegExp("(\\b|^|s)" + _.unescapeHtml(code) + "(\\b|$|s)");
-    var match;
+    const regex = new RegExp("(\\b|^|s)" + _.unescapeHtml(code) + "(\\b|$|s)");
+    let match;
 
     // Check if emote code matches using RegExp and push it to the object..
     while ((match = nonspaceRegex.exec(msg)) !== null) {
@@ -89,9 +105,9 @@ export default {
   },
 
   // Parse string emotes..
-  emoteString: function emoteString(msg, code, id, obj) {
+  emoteString(msg: string, code: string, id: string | number, obj: Emotes) {
     nonspaceRegex.lastIndex = 0;
-    var match;
+    let match;
 
     // Check if emote code matches and push it to the object..
     while ((match = nonspaceRegex.exec(msg)) !== null) {
@@ -104,8 +120,8 @@ export default {
 
   // Transform the emotes object to a string with the following format..
   // emote_id:first_index-last_index,another_first-another_last/another_emote_id:first_index-last_index
-  transformEmotes: function transformEmotes(emotes) {
-    var transformed = "";
+  transformEmotes(emotes: Emotes) {
+    let transformed = "";
 
     Object.keys(emotes).forEach(id => {
       transformed = `${transformed + id}:`;
@@ -119,8 +135,14 @@ export default {
   },
 
   // Parse Twitch messages..
-  msg: function msg(data) {
-    var message = {
+  msg(data: string) {
+    const message: {
+      raw: string;
+      tags: Tags;
+      prefix: string | null;
+      command: string | null;
+      params: string[];
+    } = {
       raw: data,
       tags: {},
       prefix: null,
@@ -129,13 +151,13 @@ export default {
     };
 
     // Position and nextspace are used by the parser as a reference..
-    var position = 0;
-    var nextspace = 0;
+    let position = 0;
+    let nextspace = 0;
 
     // The first thing we check for is IRCv3.2 message tags.
     // http://ircv3.atheme.org/specification/message-tags-3.2
     if (data.charCodeAt(0) === 64) {
-      var nextspace = data.indexOf(" ");
+      nextspace = data.indexOf(" ");
 
       // Malformed IRC message..
       if (nextspace === -1) {
@@ -143,13 +165,13 @@ export default {
       }
 
       // Tags are split by a semi colon..
-      var rawTags = data.slice(1, nextspace).split(";");
+      const rawTags = data.slice(1, nextspace).split(";");
 
-      for (var i = 0; i < rawTags.length; i++) {
+      for (let i = 0; i < rawTags.length; i++) {
         // Tags delimited by an equals sign are key=value tags.
         // If there's no equals, we assign the tag a value of true.
-        var tag = rawTags[i];
-        var pair = tag.split("=");
+        const tag = rawTags[i];
+        const pair = tag.split("=");
         message.tags[pair[0]] = tag.substring(tag.indexOf("=") + 1) || true;
       }
 

@@ -1,181 +1,146 @@
-var actionMessageRegex = /^\u0001ACTION ([^\u0001]+)\u0001$/;
-var justinFanRegex = /^(justinfan)(\d+$)/;
-var unescapeIRCRegex = /\\([sn:r\\])/g;
-var ircEscapedChars = { s: " ", n: "", ":": ";", r: "" };
-var self = {
-	// Return the second value if the first value is undefined..
-	get: (obj1, obj2) => (typeof obj1 === "undefined" ? obj2 : obj1),
+const actionMessageRegex = /^\u0001ACTION ([^\u0001]+)\u0001$/;
+const justinFanRegex = /^(justinfan)(\d+$)/;
+const unescapeIRCRegex = /\\([sn:r\\])/g;
 
-	// Value is a boolean..
-	isBoolean: (obj) => typeof obj === "boolean",
+interface IRCEscapedChars {
+  s: " ";
+  n: "";
+  ":": ";";
+  r: "";
+}
 
-	// Value is a finite number..
-	isFinite: (int) => isFinite(int) && !isNaN(parseFloat(int)),
+const ircEscapedChars: IRCEscapedChars = {
+  s: " ",
+  n: "",
+  ":": ";",
+  r: ""
+};
 
-	// Value is an integer..
-	isInteger: (int) => !isNaN(self.toNumber(int, 0)),
+const self = {
+  // Return the second value if the first value is undefined..
+  get: (obj1: any, obj2: any) => (typeof obj1 === "undefined" ? obj2 : obj1),
 
-	// Username is a justinfan username..
-	isJustinfan: (username) => justinFanRegex.test(username),
+  // Value is a boolean..
+  isBoolean: (obj: any) => typeof obj === "boolean",
 
-	// Value is null..
-	isNull: (obj) => obj === null,
+  // Value is a finite number..
+  isFinite: (int: number) => isFinite(int) && !isNaN(int),
 
-	// Value is a regex..
-	isRegex: (str) => /[\|\\\^\$\*\+\?\:\#]/.test(str),
+  // Value is an integer..
+  isInteger: (int: string) => !isNaN(self.toNumber(int, 0)),
 
-	// Value is a string..
-	isString: (str) => typeof str === "string",
+  // Username is a justinfan username..
+  isJustinfan: (username: string) => justinFanRegex.test(username),
 
-	// Value is a valid url..
-	isURL: (str) =>
-		new RegExp(
-			"^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$",
-			"i"
-		).test(str),
+  // Value is null..
+  isNull: (obj: any) => obj === null,
 
-	// Return a random justinfan username..
-	justinfan: () => `justinfan${Math.floor(Math.random() * 80000 + 1000)}`,
+  // Value is a regex..
+  isRegex: (str: string) => /[\|\\\^\$\*\+\?\:\#]/.test(str),
 
-	// Return a valid token..
-	token: (str) => (str ? str.toLowerCase().replace("oauth:", "") : ""),
+  // Value is a string..
+  isString: (str: any) => typeof str === "string",
 
-	// Return a valid password..
-	password: (str) => {
-		const token = self.token(str);
-		return token ? `oauth:${token}` : "";
-	},
+  // Value is a valid url..
+  isURL: (str: string) =>
+    new RegExp(
+      "^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$",
+      "i"
+    ).test(str),
 
-	// Race a promise against a delay..
-	promiseDelay: (time) => new Promise((resolve) => setTimeout(resolve, time)),
+  // Return a random justinfan username..
+  justinfan: () => `justinfan${Math.floor(Math.random() * 80000 + 1000)}`,
 
-	// Replace all occurences of a string using an object..
-	replaceAll: (str, obj) => {
-		if (str === null || typeof str === "undefined") {
-			return null;
-		}
-		for (var x in obj) {
-			str = str.replace(new RegExp(x, "g"), obj[x]);
-		}
-		return str;
-	},
+  // Return a valid token..
+  token: (str: string) => (str ? str.toLowerCase().replace("oauth:", "") : ""),
 
-	unescapeHtml: (safe) =>
-		safe
-			.replace(/\\&amp\\;/g, "&")
-			.replace(/\\&lt\\;/g, "<")
-			.replace(/\\&gt\\;/g, ">")
-			.replace(/\\&quot\\;/g, '"')
-			.replace(/\\&#039\\;/g, "'"),
+  // Return a valid password..
+  password: (str: string) => {
+    const token = self.token(str);
+    return token ? `oauth:${token}` : "";
+  },
 
-	// Escaping values:
-	// http://ircv3.net/specs/core/message-tags-3.2.html#escaping-values
-	unescapeIRC: (msg) =>
-		!msg || !msg.includes("\\")
-			? msg
-			: msg.replace(unescapeIRCRegex, (m, p) =>
-					p in ircEscapedChars ? ircEscapedChars[p] : p
-			  ),
+  // Race a promise against a delay..
+  promiseDelay: (time: number) =>
+    new Promise(resolve => setTimeout(resolve, time)),
 
-	actionMessage: (msg) => msg.match(actionMessageRegex),
+  unescapeHtml: (safe: string) =>
+    safe
+      .replace(/\\&amp\\;/g, "&")
+      .replace(/\\&lt\\;/g, "<")
+      .replace(/\\&gt\\;/g, ">")
+      .replace(/\\&quot\\;/g, '"')
+      .replace(/\\&#039\\;/g, "'"),
 
-	// Add word to a string..
-	addWord: (line, word) => (line.length ? line + " " + word : line + word),
+  // Escaping values:
+  // http://ircv3.net/specs/core/message-tags-3.2.html#escaping-values
+  unescapeIRC: (msg: string) =>
+    !msg || !msg.includes("\\")
+      ? msg
+      : msg.replace(unescapeIRCRegex, (m: string, p: keyof IRCEscapedChars) =>
+          p in ircEscapedChars ? ircEscapedChars[p] : p
+        ),
 
-	// Return a valid channel name..
-	channel: (str) => {
-		var channel = (str ? str : "").toLowerCase();
-		return channel[0] === "#" ? channel : "#" + channel;
-	},
+  actionMessage: (msg: string) => msg.match(actionMessageRegex),
 
-	// Extract a number from a string..
-	extractNumber: (str) => {
-		var parts = str.split(" ");
-		for (var i = 0; i < parts.length; i++) {
-			if (self.isInteger(parts[i])) {
-				return ~~parts[i];
-			}
-		}
-		return 0;
-	},
+  // Return a valid channel name..
+  channel: (str: string) => {
+    const channel = (str ? str : "").toLowerCase();
+    return channel[0] === "#" ? channel : "#" + channel;
+  },
 
-	// Format the date..
-	formatDate: (date) => {
-		var hours = date.getHours();
-		var mins = date.getMinutes();
+  // Extract a number from a string..
+  extractNumber: (str: string) => {
+    const parts = str.split(" ");
+    for (let i = 0; i < parts.length; i++) {
+      if (self.isInteger(parts[i])) {
+        return ~~parts[i];
+      }
+    }
+    return 0;
+  },
 
-		hours = (hours < 10 ? "0" : "") + hours;
-		mins = (mins < 10 ? "0" : "") + mins;
+  // Format the date..
+  formatDate: (date: Date) => {
+    const currHours = date.getHours();
+    const currMins = date.getMinutes();
 
-		return `${hours}:${mins}`;
-	},
+    const hours = (currHours < 10 ? "0" : "") + currHours;
+    const mins = (currMins < 10 ? "0" : "") + currMins;
 
-	// Inherit the prototype methods from one constructor into another..
-	inherits: (ctor, superCtor) => {
-		ctor.super_ = superCtor;
-		var TempCtor = function () {};
-		TempCtor.prototype = superCtor.prototype;
-		ctor.prototype = new TempCtor();
-		ctor.prototype.constructor = ctor;
-	},
+    return `${hours}:${mins}`;
+  },
 
-	// Return whether inside a Node application or not..
-	isNode: () => {
-		try {
-			return (
-				"object" === typeof process &&
-				Object.prototype.toString.call(process) === "[object process]"
-			);
-		} catch (e) {}
-		return false;
-	},
+  // Merge two objects..
+  merge: Object.assign,
 
-	// Return whether inside a Chrome extension or not..
-	isExtension: () => {
-		try {
-			return window.chrome && chrome.runtime && chrome.runtime.id;
-		} catch (e) {}
-		return false;
-	},
+  // Split a line but try not to cut a word in half..
+  splitLine: (input: string, length: number) => {
+    let lastSpace = input.substring(0, length).lastIndexOf(" ");
+    // No spaces found, split at the very end to avoid a loop..
+    if (lastSpace === -1) {
+      lastSpace = length - 1;
+    }
+    return [input.substring(0, lastSpace), input.substring(lastSpace + 1)];
+  },
 
-	// Return whether inside a React Native app..
-	isReactNative: () => {
-		try {
-			return navigator && navigator.product == "ReactNative";
-		} catch (e) {}
-		return false;
-	},
+  // Parse string to number. Returns NaN if string can't be parsed to number..
+  toNumber: (num: string, precision: number) => {
+    if (num === null) {
+      return 0;
+    }
+    const factor = Math.pow(10, self.isFinite(precision) ? precision : 0);
+    return Math.round(+num * factor) / factor;
+  },
 
-	// Merge two objects..
-	merge: Object.assign,
+  // Merge two arrays..
+  union: (a: string[], b: string[]) => [...new Set([...a, ...b])],
 
-	// Split a line but try not to cut a word in half..
-	splitLine: (input, length) => {
-		var lastSpace = input.substring(0, length).lastIndexOf(" ");
-		// No spaces found, split at the very end to avoid a loop..
-		if (lastSpace === -1) {
-			lastSpace = length - 1;
-		}
-		return [input.substring(0, lastSpace), input.substring(lastSpace + 1)];
-	},
-
-	// Parse string to number. Returns NaN if string can't be parsed to number..
-	toNumber: (num, precision) => {
-		if (num === null) {
-			return 0;
-		}
-		var factor = Math.pow(10, self.isFinite(precision) ? precision : 0);
-		return Math.round(num * factor) / factor;
-	},
-
-	// Merge two arrays..
-	union: (a, b) => [...new Set([...a, ...b])],
-
-	// Return a valid username..
-	username: (str) => {
-		var username = (str ? str : "").toLowerCase();
-		return username[0] === "#" ? username.slice(1) : username;
-	},
+  // Return a valid username..
+  username: (str: string) => {
+    const username = (str ? str : "").toLowerCase();
+    return username[0] === "#" ? username.slice(1) : username;
+  }
 };
 
 export default self;
